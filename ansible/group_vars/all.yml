@@ -1,0 +1,76 @@
+---
+# ------------------------------------------------------------ #
+# Directories for Ansible system
+# ------------------------------------------------------------ #
+config_dir: ./configurations
+gathered_facts_dir: ./gathered_facts
+host_vars_static_dir: ./host_vars_static
+
+# ------------------------------------------------------------ #
+# Credentials for network device management
+# ------------------------------------------------------------ #
+
+user: ansotest
+password: ansotest
+
+# ------------------------------------------------------------ #
+# Group variables for all devices in test laboratory
+# List of example group variables
+# ------------------------------------------------------------ #
+dns:
+  name-servers:
+    name-server:
+    - 193.2.1.66
+    - 193.2.1.72
+    - 2001:1470:8000::66
+    - 2001:1470:8000::72
+  domain-name: test.arnes.si
+aaa:
+  users:
+    user:
+      admin:
+        name: admin
+        access-class: admin
+        encrypted-password: xxx
+        ssh-key: []
+  radius:
+    servers:
+      server:        
+          name: test
+          address: 10.0.18.171
+          auth-port: 1812
+          acct-port: 1813
+          timeout: 2
+          retry: 1
+          secret: xxx
+snmp:
+  communities:
+    community:
+      labcomm:
+        community: test
+        clients:
+        - 10.0.18.160/27
+        - 10.0.1.128/25
+ntp:
+  servers:
+    server:
+    - 88.200.0.160
+    - 88.200.0.161
+    - 88.200.0.162
+    - 88.200.0.163
+    - 193.2.1.92
+    - 193.2.1.117
+    - 2001:1470:8000::92
+    - 2001:1470:8000::117  
+logging:
+  hosts:
+    host:
+    - 10.0.18.170
+source_interface: vlan.1
+local_routing:
+  static-routes:
+    0.0.0.0/0:
+      route: 0.0.0.0/0
+      next-hop: 10.0.0.1
+ospf:
+  area: 0      

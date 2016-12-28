@@ -1,0 +1,9 @@
+vtp version 3
+vtp mode off
+vtp domain {{ system.hostname }}
+!
+{% for vlan in vlans.vlan.values() %}
+vlan {{ vlan['vlan-id'] }}
+ name {{ vlan.config.name }}
+!
+{% endfor %}

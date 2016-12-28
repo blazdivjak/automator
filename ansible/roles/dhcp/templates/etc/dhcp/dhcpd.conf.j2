@@ -1,0 +1,58 @@
+# ------------------------------------------------------------ #
+# DHCP service
+# Configured by automator
+# ------------------------------------------------------------ #
+
+log-facility local3;
+option domain-name "arnes.si";
+option domain-name-servers 193.2.1.72, 193.2.1.66;
+default-lease-time 600;
+max-lease-time 1200;
+ddns-update-style none;
+one-lease-per-client true;
+not authoritative;
+
+on commit {
+        if (exists agent.circuit-id)
+        {
+                set ClientIP = binary-to-ascii (10, 8, ".", leased-address);
+                set SwitchPort = binary-to-ascii (10, 8, "/", suffix ( option agent.circuit-id, 2));
+                set SwitchVLAN = binary-to-ascii (10, 16, "", substring( option agent.circuit-id, 2, 2));
+                set SwitchMAC = binary-to-ascii (16, 8, ":", substring( option agent.remote-id, 2, 6));
+                log ( info, concat( "Client ", ClientIP, " via interface ", SwitchPort,
+                " VLAN ", SwitchVLAN, " on switch ", SwitchMAC));
+                # Debug
+                log ( info, concat( "Lease for ", binary-to-ascii (10, 8, ".", leased-address),
+                " raw option-82 info is CID: ", binary-to-ascii (10, 8, ".", option agent.circuit-id), " AID: ",
+                binary-to-ascii(16, 8, ".", option agent.remote-id)));
+        }
+
+        # Log CHADDR
+        set CHADDR = binary-to-ascii (16, 8, ":", substring(hardware, 1 , 6));
+        log ( info, concat( "Internal CHADDR: ", CHADDR));
+
+        #Match client to SharedNetwork for Tenant logging for our customers
+        set ClientIP = binary-to-ascii (10, 8, ".", leased-address);
+        set SharedNetwork = config-option default-url;
+	set ClientMAC = concat (
+                suffix (concat ("0", binary-to-ascii (16, 8, "", substring(hardware,1,1))),2), ":",
+                suffix (concat ("0", binary-to-ascii (16, 8, "", substring(hardware,2,1))),2), ":",
+                suffix (concat ("0", binary-to-ascii (16, 8, "", substring(hardware,3,1))),2), ":",
+                suffix (concat ("0", binary-to-ascii (16, 8, "", substring(hardware,4,1))),2), ":",
+                suffix (concat ("0", binary-to-ascii (16, 8, "", substring(hardware,5,1))),2), ":",
+                suffix (concat ("0", binary-to-ascii (16, 8, "", substring(hardware,6,1))),2) );
+
+        log(info, concat("client: ", ClientIP , ", mac: ", ClientMAC, ", shared network: ", config-option default-url));
+}
+
+
+#default subnet
+subnet 153.5.230.160 netmask 255.255.255.224 {
+}
+
+subnet 153.5.250.0 netmask 255.255.255.224 {        
+}
+
+# includes
+include "/etc/dhcpd.conf.d/static4.conf";
+include "/etc/dhcpd.conf.d/dynamic4.conf";

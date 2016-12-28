@@ -1,0 +1,15 @@
+forwarding-options {
+{% if 'dhcp' in relay_agent %}
+    helpers {
+        bootp {
+{% for interface in relay_agent.dhcp.interfaces.interface.values() %}
+            interface {{ interface.name }} {
+{% for helper_address in dhcpv4.config['helper-address'] %}
+                server {{ helper_address }};
+{% endfor %}
+            }
+{% endfor %}
+        }
+    }
+{% endif %}
+}

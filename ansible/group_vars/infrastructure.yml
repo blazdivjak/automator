@@ -1,0 +1,12 @@
+---
+# ------------------------------------------------------------ #
+# Credentials for infrastructure service management
+# ------------------------------------------------------------ #
+ansible_connection: ssh
+ansible_user: root
+ansible_ssh_pass: xxx
+#ansible_ssh_private_key_file: /Users/blaz/.ssh/id_rsa
+
+# ------------------------------------------------------------ #
+# Group variables for all service hosts for infrastructure
+# ------------------------------------------------------------ #

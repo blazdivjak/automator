@@ -1,0 +1,7 @@
+---
+source_interface: vlan.501
+local_routing:
+  static-routes:
+    0.0.0.0/0:
+      route: 0.0.0.0/0
+      next-hop: 10.0.79.201

@@ -1,0 +1,42 @@
+###############################################################
+# Filters for ISC DHCP logs
+# Fields explained:
+#   * client            - client IP address
+#   * mac               - client MAC address
+#   * shared_network    - shared_network inserted by ISC DHCP service (see dhcp role)
+#   * via               - ip relay address
+#   * error             - error description
+#   * dhcp_server       - dhcpd server IP address
+###############################################################
+
+#####################
+# Normal log example with network name
+# 1 client: 10.0.3.106, mac: 00:25:b3:bf:94:88, shared network: 1234_network-test
+#####################
+
+DHCPD_CLIENT client: %{IP:client}, mac: %{MAC:mac}, shared network: %{GREEDYDATA:shared_network}
+
+#####################
+#Error log examples
+# 1 DHCPDISCOVER from 10:41:7f:a3:f4:91 via 149.62.72.65: network 503_eduroam: no free leases
+# 2 DHCPDISCOVER from 00:02:61:1f:32:b5 via 194.249.141.129: unknown network segment
+# 3 DHCPDISCOVER from a0:38:f7:4a:85:1b (iPhone) via 10.0.0.1
+#####################
+
+DHCPD_DISCOVER_ERROR DHCPDISCOVER from %{MAC:mac} via %{IP:via}:( network %{DATA:shared_network}:)? %{GREEDYDATA:error}
+DHCPD_AAI_DISCOVER_NOERROR DHCPDISCOVER from %{MAC:mac}( \(%{DATA:hostname}\))? via %{IP:via}
+DHCPD_DISCOVER (%{DHCPD_DISCOVER_ERROR}|%{DHCPD_DISCOVER_NOERROR})
+
+#####################
+# Decline log example
+# 1 DHCPDECLINE of 149.62.72.103 from 04:15:52:ea:f9:74 (iPhone-3) via 149.62.72.65: abandoned
+#####################
+DHCPD_DECLINE DHCPDECLINE of %{IP:client} from %{MAC:mac}( %{DATA})? via %{IP:via}: %{GREEDYDATA:error}
+
+#####################
+# Request example
+# 1 DHCPREQUEST for 1.2.3.4 (10.1.20.1) from a0:38:f7:4a:85:1b via 192.168.1.10: lease owned by peer
+#####################
+DHCPD_DHCPREQUEST DHCPREQUEST for %{IP:client} \(%{IP:dhcp_server}\) from %{MAC:mac} via %{IP:via}: %{GREEDYDATA:error}
+DHCPD (%{DHCPD_AAI_CLIENT}|%{DHCPD_AAI_DISCOVER}|%{DHCPD_AAI_DECLINE}|%{DHCPD_DHCPREQUEST})
+

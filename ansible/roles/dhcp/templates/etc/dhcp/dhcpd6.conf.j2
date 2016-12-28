@@ -1,0 +1,25 @@
+# ------------------------------------------------------------ #
+# DHCP service
+# Configured by automator
+# ------------------------------------------------------------ #
+
+
+log-facility local3;
+option dhcp6.name-servers 2001:1470:8000::72, 2001:1470:8000::66;
+default-lease-time 2592000;
+preferred-lifetime 604800;
+option dhcp-renewal-time 3600;
+option dhcp-rebinding-time 7200;
+allow leasequery;
+option dhcp6.domain-search "arnes.si";
+option dhcp6.preference 255;
+option dhcp6.rapid-commit;
+option dhcp6.info-refresh-time 21600;
+dhcpv6-lease-file-name "/var/lib/dhcpd/dhcpd6.leases";
+
+#default subnet
+subnet6 2001:1470:db8::/64 { }
+
+#includes
+include "/etc/dhcpd.conf.d/static6.conf";
+include "/etc/dhcpd.conf.d/dynamic6.conf";

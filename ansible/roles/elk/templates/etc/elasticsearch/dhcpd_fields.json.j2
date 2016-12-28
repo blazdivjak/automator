@@ -1,0 +1,132 @@
+{
+ "template" : "logs-dhcpd-*",
+ "settings" : {
+   "index.number_of_shards" : "1",
+   "index.refresh_interval" : "15s",
+   "index.number_of_replicas" : "1"
+ },
+ "aliases" : { "aai" : { } },
+ "mappings" : {
+   "dhcpd" : {
+     "_all" : {
+       "enabled" : true,
+       "omit_norms" : true
+     },
+     "dynamic_templates" : [ {
+       "message_field" : {
+         "match" : "message",
+         "match_mapping_type" : "string",
+         "mapping" : {
+           "type" : "string",
+           "index" : "analyzed",
+           "omit_norms" : true,
+           "fielddata" : {
+             "format" : "disabled"
+           }
+         }
+       }
+     } ],
+     "properties" : {
+       "timestamp_utc": {
+         "type": "date"
+       },
+       "client": {
+         "type": "string",
+         "index" : "not_analyzed"
+       },
+       "mac": {
+         "type": "string",
+         "index" : "not_analyzed"
+       },
+       "shared_network": {
+         "type": "string",
+         "index" : "not_analyzed"
+       },
+       "via": {
+         "type": "string",
+         "index" : "not_analyzed"
+         },
+       "dhcp_server": {
+         "type": "string",
+         "index" : "not_analyzed"
+       },
+       "error": {
+         "type": "string",
+         "index" : "not_analyzed"
+       },
+       "status": {
+         "type": "string",
+         "index" : "not_analyzed"
+       },
+
+
+       "@timestamp": {
+         "type": "date"
+       },
+       "@version": {
+         "type": "string",
+         "index": "not_analyzed"
+       },
+       "geoip"  : {
+         "type" : "object",
+         "dynamic": true,
+         "properties" : {
+           "ip": { "type": "ip" },
+           "location" : { "type" : "geo_point" },
+           "latitude" : { "type" : "float" },
+           "longitude" : { "type" : "float" }
+         }
+       },
+       "count": {
+         "type": "long"
+       },
+       "host": {
+         "type": "string",
+         "index": "not_analyzed"
+       },
+       "logstash_node": {
+         "type": "string",
+         "index": "not_analyzed"
+       },
+       "program": {
+         "type": "string",
+         "index": "not_analyzed"
+       },
+       "source" : {
+         "type" : "string",
+         "norms" : {
+           "enabled" : false
+         },
+         "fields" : {
+           "raw" : {
+             "type" : "string",
+             "index" : "not_analyzed",
+             "ignore_above" : 256
+           }
+         }
+       },
+       "tags" : {
+         "type" : "string",
+         "norms" : {
+           "enabled" : false
+         },
+         "fields" : {
+           "raw" : {
+             "type" : "string",
+             "index" : "not_analyzed",
+             "ignore_above" : 256
+           }
+         }
+       },
+       "timestamp": {
+         "type": "string",
+         "index": "not_analyzed"
+       },
+       "type" : {
+         "type" : "string",
+         "index" : "not_analyzed"
+       }
+     }
+   }
+ }
+}

@@ -1,0 +1,148 @@
+version 15.2
+no service pad
+service tcp-keepalives-in
+service timestamps debug datetime msec localtime show-timezone
+service timestamps log datetime msec localtime show-timezone
+service password-encryption
+service compress-config
+service unsupported-transceiver
+!
+hostname {{ system.hostname.split('.')|first }}
+!
+clock timezone CET 1 0
+clock summer-time CEST recurring last Sun Mar 2:00 last Sun Oct 2:00
+!
+{% if system.model == 'WS-C4500X-16' %}
+archive
+ path bootflash:archive
+ write-memory
+!
+{% else %}
+archive
+ path flash:archive
+ write-memory
+!
+{% endif %}
+{%- if system.model == 'WS-C4500X-16' %}
+vrf definition mgmtVrf
+ !
+ address-family ipv4
+ exit-address-family
+ !
+ address-family ipv6
+ exit-address-family
+!
+ip vrf Liin-vrf
+!
+{% endif %}
+{# dns #}
+ip domain-name {{ dns['domain-name'] }}
+{% for name_server in dns['name-servers']['name-server'] %}
+ip name-server {{ name_server }}
+{% endfor %}
+!
+{# aaa #}
+!
+ip ssh version 2
+ip scp server enable
+!
+{% for user in aaa.users.user.values() %}
+username {{ user.name }} privilege {{ user['access-class']|convert_access_class('ios') }} secret 5 {{ user['encrypted-password'] }}
+{% if user['ssh-key'] %}
+ip ssh pubkey-chain
+ username {{ user.name }}
+{% for key in user['ssh-key'] %}
+  key-string
+{{ key|wordwrap(79, True) }}
+exit
+{% endfor %}
+{% endif %}
+{% endfor %}
+!
+aaa new-model
+!
+aaa group server radius management
+ server name {{ aaa.radius.servers.server.name }}
+ ip radius source-interface {{ source_interface }}
+!
+aaa authentication login default local group management
+aaa authorization console
+aaa authorization exec default local group management
+!
+aaa session-id common
+!
+{% for server in aaa.radius.servers.server.values() %}
+radius server {{ server.name }}
+{% if server.address|ipv4 %}
+ address ipv4 {{ server.address }} auth-port {{ server['auth-port'] }}{% if server['acct-port'] %} acct-port {{ server['acct-port'] }}{% endif %}
+
+{% elif server.address|ipv6 %}
+ address ipv6 {{ server.address }} auth-port {{ server['auth-port'] }}{% if server['acct-port'] %} acct-port {{ server['acct-port'] }}{% endif %}
+
+{% endif %}
+ timeout {{ server.timeout }}
+ retransmit {{ server.retry }}
+ key {{ server.secret }}
+!
+{% endfor %}
+{# snmp #}
+{% for community in snmp.communities.community.values() %}
+ip access-list standard Snmp{{ community.community }}Clients
+{% for subnet in community.clients|ipv4 %}
+ permit {{ subnet|ipaddr('network') }} {{ subnet|ipaddr('hostmask') }}
+{% endfor %}
+ deny any
+!
+ipv6 access-list Snmp{{ community.community }}Clients6
+{% for subnet in community.clients|ipv6 %}
+ permit ipv6 {{ subnet }} any
+{% endfor %}
+ deny ipv6 any any
+!
+snmp-server community {{ community.community }} RO ipv6 Snmp{{ community.community }}Clients6 Snmp{{ community.community }}Clients
+!
+{% endfor %}
+{# logging #}
+logging discriminator NOACL mnemonics drops ACCESSLOG
+logging buffered discriminator NOACL 262144
+logging monitor discriminator NOACL
+logging trap informational
+logging source-interface {{source_interface}}
+{% for host in logging.hosts.host %}
+logging host {{ host }}
+{% endfor %}
+!
+{# ntp #}
+ntp source {{ source_interface }}
+{% for server in ntp.servers.server %}
+ntp server {{ server }}
+{% endfor %}
+!
+{# FIXME: rapid/mst? move to own module? #}
+spanning-tree mode pvst
+spanning-tree extend system-id
+!
+no ip http server
+no ip http secure-server
+lldp run
+!
+{% if system.model == 'WS-C2960CX-8TC-L' %}
+line con 0
+ stopbits 1
+line vty 0 4 
+ exec-timeout 1440 0 
+ transport input ssh
+line vty 5 15 
+ exec-timeout 1440 0 
+ transport input telnet ssh
+{% else -%} 
+line con 0
+ stopbits 1
+line vty 0 4 
+ exec-timeout 1440 0 
+ transport input ssh
+line vty 5 16 
+ exec-timeout 1440 0 
+ transport input ssh
+{% endif -%} 
+!

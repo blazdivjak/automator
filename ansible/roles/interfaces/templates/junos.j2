@@ -1,0 +1,56 @@
+interfaces {
+{% for _, interface in interfaces.interface|dictsort() %}
+{% if 'routed-vlan' in interface %}
+    vlan {
+        unit {{ interface['routed-vlan']['config']['vlan'] }} {
+{% else %}            
+    {{ interface.name }} {        
+        unit 0 {
+{% endif %}                    
+{%- if interface.config.description %}
+            description "{{ interface.config.description }}";
+{% endif %}
+{% if interface.config.enabled|default(True)==False %}
+            disable;
+{% endif %}
+{% if 'ethernet' in interface and 'switched-vlan' in interface.ethernet %}
+{% set vlan = interface.ethernet['switched-vlan'] %}
+            family ethernet-switching {
+                port-mode {{ vlan.config['interface-mode']|lower }};
+{% if 'access-vlan' in vlan.config %}                
+                vlan{
+                    members {{ vlan.config['access-vlan'] }};
+                }
+{% endif %}
+{% if 'native-vlan' in vlan.config %}
+                native-vlan-id {{ vlan.config['native-vlan'] }};
+{% endif %}
+{% if 'trunk-vlans' in vlan.config %}
+                vlan{
+                    members [ {{ vlan.config['trunk-vlans']|join(' ') }} ];
+                }
+{% endif %}
+            }
+{% endif %}
+{% if 'routed-vlan' in interface %}    
+{% if 'ipv4' in interface['routed-vlan'] %}
+{% set ipv4 = interface['routed-vlan'].ipv4 %}
+            family inet {
+{% for address in ipv4.addresses.address.values() %}
+                address {{ address.config.ip }}/{{ address.config['prefix-length'] }};
+{% endfor %}
+            }
+{% endif %}
+{% if 'ipv6' in interface['routed-vlan'] %}
+{% set ipv6 = interface['routed-vlan'].ipv6 %}
+            family inet6 {
+{% for address in ipv6.addresses.address.values() %}
+                address {{ address.config.ip }}/{{ address.config['prefix-length'] }}
+{% endfor %}
+            }
+{% endif %}
+{% endif %}
+        }
+    }
+{% endfor %}            
+}

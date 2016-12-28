@@ -1,0 +1,85 @@
+input {
+    beats {
+        port => "5044"
+    }
+}
+
+filter {
+
+  grok {
+    patterns_dir => [ '/etc/logstash/patterns' ]
+    match => [ 'message', '%{SYSLOGLINE}']
+    overwrite => [ 'message' ]
+    add_tag => [ '_grok_syslog_prefilter_success' ]
+    tag_on_failure => [ '_grok_syslog_prefilter_fail' ]
+  }
+
+  mutate {
+    rename => [ "logsource", "host" ]
+    remove_field => [ "syslog_format" ]
+  }
+
+  date {
+    match => [ "timestamp", "MMM  d HH:mm:ss", "MMM dd HH:mm:ss" ]
+  }
+
+  if [type] == "dhcpd" {
+
+    if [message] =~ /^client/ {
+      grok {
+        patterns_dir => [ '/etc/logstash/patterns' ]
+        match => [ 'message', '%{DHCPD_CLIENT}']
+        add_tag => [ 'save_to_elasticsearch', '_grok_dhcpd_client_match' ]
+        tag_on_failure => [ 'save_to_logfile', '_grok_dhcpd_client_nomatch']
+        add_field => { status => "ok"}
+      }
+    } else if [message] =~ /^DHCPDISCOVER/ {
+      grok {
+        patterns_dir => [ '/etc/logstash/patterns' ]
+        match => [ 'message', '%{DHCPD_DISCOVER}']
+        add_tag => [ 'save_to_elasticsearch', '_grok_dhcpd_discover_match' ]
+        tag_on_failure => [ 'save_to_logfile', '_grok_dhcpd_discover_nomatch']
+      }
+    } else if [message] =~ /^DHCPDECLINE/ {
+      grok {
+        patterns_dir => [ '/etc/logstash/patterns' ]
+        match => [ 'message', '%{DHCPD_DECLINE}']
+        add_tag => [ 'save_to_elasticsearch', '_grok_dhcpd_decline_match' ]
+        tag_on_failure => [ 'save_to_logfile', '_grok_dhcpd_decline_nomatch']
+      }
+    } else if [message] =~ /^DHCPREQUEST/ {
+      grok {
+        patterns_dir => [ '/etc/logstash/patterns' ]
+        match => [ 'message', '%{DHCPD_DHCPREQUEST}']
+        add_tag => [ 'save_to_elasticsearch', '_grok_dhcpd_request_match' ]
+        tag_on_failure => [ 'save_to_logfile', '_grok_dhcpd_request_nomatch']
+      }
+    } else {
+        mutate {
+            add_tag => [ '_grok_dhcpd_nomatch', 'save_to_logfile' ]
+        }
+    }    
+    if "_grok_dhcpd_discover_match" in [tags] and ![error] {
+      drop {}
+    }    
+    if [error] {
+      mutate {
+        add_field => { "status" => "error" }
+      }
+    }    
+    mutate {
+      add_field => {
+        "timestamp_utc" => "%{@timestamp}"
+      }
+    }
+
+  }
+}
+output {
+
+	elasticsearch {
+	    hosts => [ "localhost:9200" ]
+	    index => "logs-%{type}-%{+YYYY.MM}"
+	}
+
+}

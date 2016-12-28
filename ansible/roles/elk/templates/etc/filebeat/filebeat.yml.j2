@@ -1,0 +1,29 @@
+############################# 
+#Filebeat for DHCP service 
+#############################
+
+filebeat:  
+  prospectors:
+  - input_type: log
+    paths:
+    - "/var/log/dhcp.log"
+    fields:
+      syslog_format: true
+    fields_under_root: true
+    document_type: dhcpd
+    ignore_older: 24h
+    include_lines: ['^[A-Za-z0-9: ]{27,35}(DHCPDISCOVER|DHCPDECLINE|client)']
+  registry_file: /var/lib/filebeat/registry
+output:  
+  logstash:
+    hosts: ["localhost:5044"]
+
+shipper:
+logging:
+  files:
+    path: /var/log/
+    name: filebeat
+
+    rotateeverybytes: 10485760 # = 10MB  
+  level: debug
+  to_files: true

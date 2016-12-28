@@ -1,0 +1,114 @@
+---
+########################################################################
+#
+# (C) 2016, Blaz Divjak, ARNES <blaz@arnes.si> <blaz@divjak.si>
+#
+# This file is part of Automator
+#
+# Automator is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Automator is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Automator.  If not, see <http://www.gnu.org/licenses/>.
+#
+########################################################################
+#Settings
+
+- name: Set timezone
+  shell: timedatectl set-timezone Europe/Ljubljana
+
+#Dependencies
+
+- name: Install Python Devel
+  yum: name=python-devel state=installed
+  tags: python
+
+- name: Install Python pip
+  yum: name=python-pip state=installed
+  tags: python
+
+- name: install the 'Development tools' package group
+  yum: name="@Development tools" state=present
+
+- name: Install Git
+  yum: name=git state=installed
+  tags: git
+
+- name: Install Java
+  yum: name=git state=installed
+  tags: java
+
+- name: Install filebeat from remote repo
+  yum: name=https://download.elastic.co/beats/filebeat/filebeat-1.3.1-x86_64.rpm state=present
+
+- name: Install logstash from remote repo
+  yum: name=https://download.elastic.co/logstash/logstash/packages/centos/logstash-2.4.0.noarch.rpm state=present  
+
+- name: Install kibana from remote repo
+  yum: name=https://download.elastic.co/kibana/kibana/kibana-4.5.4-1.x86_64.rpm state=present  
+
+- name: Install elastic from remote repo
+  yum: name=https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/rpm/elasticsearch/2.4.0/elasticsearch-2.4.0.rpm state=present  
+
+- name: Install elastalert from github
+  git: repo=https://github.com/Yelp/elastalert.git
+       dest=/opt/elastalert
+       #version=release-0.12
+
+#- name: Install elastalert
+#  command: cd /opt/elastalert && python setup.py install && pip install -r requirements.txt
+
+#Files and configurations
+
+- name: Create folder for Elastic Alert
+  file: path={{elastalert_configuration_folder}} state=directory
+
+- name: Install remedy scripts for Elastic Alert
+  copy:
+    src:   "{{ item }}"
+    dest: "/{{ item }}"      
+  with_items: [ 'opt/elastalert.conf.d/remedy.py', 'opt/elastalert.conf.d/__init__.py', 'opt/elastalert.conf.d/lib/apinator/']
+  notify: []
+  tags: elk  
+
+- name: Create pattern folder for Logstash
+  file: path={{pattern_folder}} state=directory
+
+- name: Install config files for ELK stack
+  template:
+    src:   "{{ item }}.j2"
+    dest: "/{{ item }}"      
+  with_items: [ 'etc/filebeat/filebeat.yml', 'etc/logstash/conf.d/dhcpd.conf', 'etc/logstash/patterns/dhcpd.grok',
+   'etc/logstash/patterns/common.grok', 'opt/elastalert.conf.d/dhcpd_no_free_leases.yaml',
+   'etc/elasticsearch/dhcpd_fields.json', 'opt/elastalert/config.yaml']
+  notify: ['restart filebeat', 'restart logstash', 'restart elasticsearch', 'restart kibana']
+  tags: elk
+
+#Services
+  
+- name: Filebeat is running
+  service: name=filebeat state=started enabled=yes
+  tags: elk
+
+- name: Logstash is running
+  service: name=logstash state=started enabled=yes
+  tags: elk
+
+- name: Elastic search is running
+  service: name=elasticsearch state=started enabled=yes
+  tags: elk
+
+- name: Kibana is running
+  service: name=kibana state=started enabled=yes
+  tags: elk
+
+- name: Import DHCPD field definitions for analysis into Elastic Search
+  command: curl -XPUT localhost:9200/_template/dhcpd -d @/etc/elasticsearch/dhcpd_fields.json
+  

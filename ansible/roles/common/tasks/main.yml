@@ -1,0 +1,9 @@
+---
+# main role for all servers in ansible learning
+- name: install ntp
+  yum: name=ntp state=installed
+  tags: ntp
+
+- name: make sure ntp is running
+  service: name=ntpd state=started enabled=yes
+  tags: ntp

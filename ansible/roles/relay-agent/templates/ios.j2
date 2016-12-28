@@ -1,0 +1,9 @@
+{% for _, interface in relay_agent.dhcp.interfaces.interface|dictsort() %}
+{% if interface.config.enable == True %}
+interface {{ interface.id }}
+{% for helper_address in interface.config['helper-address'] %}
+ ip helper-address {{ helper_address }}
+{% endfor %}
+!
+{% endif %}
+{% endfor %}

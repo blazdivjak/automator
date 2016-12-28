@@ -1,0 +1,59 @@
+---
+########################################################################
+#
+# (C) 2016, Blaz Divjak, ARNES <blaz@arnes.si> <blaz@divjak.si>
+#
+# This file is part of Automator
+#
+# Automator is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Automator is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Automator.  If not, see <http://www.gnu.org/licenses/>.
+#
+########################################################################
+- name: Install ISC DHCP Server
+  yum: name=dhcp state=installed
+  tags: dhcpd
+
+- name: Install rsyslog
+  yum: name=rsyslog state=installed
+  tags: rsyslog
+
+- name: Create folder for configuration
+  file: path={{static_configuration_folder}} state=directory
+
+- name: Generate static file for host
+  file: path={{static_configuration_files.v4}} state=touch
+
+- name: Install DHCP config files
+  template:
+    src:   "{{ item }}.j2"
+    dest: "/{{ item }}"  
+    validate: 'dhcpd -t -cf %s'
+  with_items: [ 'etc/dhcp/dhcpd.conf', 'etc/dhcpd.conf.d/dynamic4.conf']
+  notify: ['restart dhcp', 'restart rsyslog']
+  tags: dhcp  
+
+- name: Install Rsyslog config files
+  template:
+    src:   "{{ item }}.j2"
+    dest: "/{{ item }}"    
+  with_items: [ 'etc/rsyslog.d/dhcpd.conf']
+  notify: ['restart dhcp', 'restart rsyslog']
+  tags: rsyslog
+
+- name: DHCP is running
+  service: name=dhcpd state=started enabled=yes
+  tags: dhcp  
+
+- name: Rsyslog is running
+  service: name=rsyslog state=started enabled=yes
+  tags: rsyslog

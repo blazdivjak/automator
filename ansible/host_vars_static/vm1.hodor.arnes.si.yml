@@ -1,0 +1,10 @@
+---
+ansible_connection: ssh
+ansible_user: root
+ansible_ssh_pass: xxx
+static_configuration_folder: /etc/dhcpd.conf.d/
+static_configuration_files:
+  v4: /etc/dhcpd.conf.d/static4.conf
+  v6: /etc/dhcpd.conf.d/static6.conf
+pattern_folder: /etc/logstash/patterns/  
+elastalert_configuration_folder: /opt/elastalert.conf.d/ 

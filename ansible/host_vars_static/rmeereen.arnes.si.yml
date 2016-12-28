@@ -1,0 +1,4 @@
+---
+source_interface: Loopback0
+ospf:
+  area: 0

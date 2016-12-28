@@ -1,0 +1,85 @@
+# Alert when the rate of events exceeds a threshold
+
+# (Optional)
+# Elasticsearch host
+es_host: localhost
+
+# (Optional)
+# Elasticsearch port
+es_port: 9200
+
+# (OptionaL) Connect with SSL to elasticsearch
+#use_ssl: True
+
+# (Optional) basic-auth username and password for elasticsearch
+#es_username: someusername
+#es_password: somepassword
+
+# (Required)
+# Rule name, must be unique
+name: IP Address space depleted. No free leases.
+
+# (Required)
+# Type of alert.
+# the frequency rule type alerts when num_events events occur with timeframe time
+type: frequency
+
+# (Required)
+# Index to search, wildcard supported
+index: logs-dhcpd-%Y.%m
+use_strftime_index: true
+
+# (Required, frequency specific)
+# Alert when this many documents matching the query occur within a timeframe
+num_events: 5
+
+# (Required, frequency specific)
+# num_events must occur within this amount of time to trigger an alert
+timeframe:
+  days: 1
+
+# (Required)
+# A list of elasticsearch filters used for find events
+# These filters are joined with AND and nested in a filtered query
+# For more info: http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl.html
+filter:
+- term:
+    error: "no free leases"
+
+query_key: shared_network
+
+# (Required)
+# The alert is use when a match is found
+alert:
+- "email"
+- "command"
+
+#Call script which adds a new address to network which has depleted its
+command: ["python","/opt/elastalert.conf.d/remedy.py","--network", "{0}"]
+
+# (required, email specific)
+# a list of email addresses to send alerts to
+email:
+- "blaz@arnes.si"
+
+from_addr: "root@vm1.hodor.arnes.si"
+
+realert:
+  hours: 12
+
+alert_text_type: exclude_fields
+alert_subject: "Lack of free IPs in DHCP pool for Network: {0}"
+alert_subject_args:
+  - shared_network
+
+alert_text: |
+    No free leases error was raised more than 5 times for network {0}
+alert_text_args:
+  - shared_network
+
+top_count_keys: ["shared_network"]
+#top_terms_keys: ["shared_network"]
+raw_count_keys: false
+
+use_terms_query: true
+doc_type: dhcpd

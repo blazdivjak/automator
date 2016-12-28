@@ -1,0 +1,11 @@
+vlans {
+{% for vlan in vlans.vlan.values() %}
+    {{ vlan.config.name }} {    	
+        vlan-id {{ vlan['vlan-id'] }};
+{%- set interface_vlan = ["vlan", ".", vlan['vlan-id']]|join %}   
+{%- if interface_vlan in interfaces.interface %}        		
+		l3-interface vlan.{{ vlan['vlan-id'] }};
+{% endif %}		        
+    }
+{% endfor %}
+}

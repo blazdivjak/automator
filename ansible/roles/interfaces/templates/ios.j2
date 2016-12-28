@@ -1,0 +1,70 @@
+{% for _, iface in interfaces.interface|dictsort() %}
+interface {{ iface.name }}
+{% if iface.config.description %}
+ description {{ iface.config.description }}
+{% endif %}
+{#LoopBack#}
+{% if iface.config.type == 'softwareLoopback' %}
+{% for _,subint in iface.subinterfaces.subinterface.iteritems():  %}
+{% for _, address in iface['subinterfaces']['subinterface'].iteritems() %}
+{% if 'ipv4' in address %}
+{% for _, addr in address.ipv4.addresses.address.iteritems() %}
+ ip address {{addr.config.ip}} {{[addr.config.ip, addr['config']['prefix-length']]|join('/')|cidr_to_netmask}}
+{% if ospf is defined%}
+ ip ospf 1 area {{ospf.area}}
+{% endif %}
+{% endfor %}
+{% if 'ipv6' in address %}
+{% for _, addr in address.ipv6.addresses.address.iteritems() %}
+ ipv6 address {{addr.config.ip}}/{{addr['config']['prefix-length']}}
+{% if ospf is defined %}
+ ipv6 ospf 1 area {{ospf.area}}
+{% endif %}
+{% endfor -%}
+{% endif -%}  
+{% endif -%}  
+{% endfor -%}
+{% endfor -%}  
+{% endif -%}
+{#propVirtual#}
+{% if iface.config.type == 'propVirtual' and iface['routed-vlan'] is defined %}
+{% if 'ipv4' in iface['routed-vlan'] %}
+{% for _, address in iface['routed-vlan']['ipv4']['addresses']['address'].iteritems() %}
+{% if loop.index == 1 %}
+ ip address {{address.config.ip}} {{[address.config.ip, address['config']['prefix-length']]|join('/')|cidr_to_netmask}}
+{%else%}
+ ip address {{address.config.ip}} {{[address.config.ip, address['config']['prefix-length']]|join('/')|cidr_to_netmask}} secondary
+{% endif %}
+{% endfor %}
+{% endif %}
+{% if 'ipv6' in iface['routed-vlan'] %}
+{% for _, address in iface['routed-vlan']['ipv6']['addresses']['address'].iteritems() %}
+{% if loop.index == 1 %}
+ ipv6 address {{address.config.ip}}/{{address['config']['prefix-length']}}
+{%else%}
+ ipv6 address {{address.config.ip}}/{{address['config']['prefix-length']}} secondary
+{% endif %}
+{% endfor %}
+ ipv6 enable
+{% endif %}
+{% endif %}
+{% if 'enabled' in iface.config and iface.config.enabled==False %}
+ shutdown
+{% endif %}
+{% if 'ethernet' in iface and 'switched-vlan' in iface.ethernet %}
+{% set vlan = iface.ethernet['switched-vlan'] %}
+{% if 'interface-mode' in vlan.config %}
+ switchport mode {{  vlan.config['interface-mode']|lower }}
+{% endif %}
+{% if 'access-vlan' in vlan.config %}
+ switchport access vlan {{  vlan.config['access-vlan'] }}
+{% endif %}
+{% if 'native-vlan' in vlan.config %}
+ switchport trunk native vlan {{  vlan.config['native-vlan'] }}
+{% endif %}
+{% if 'trunk-vlans' in vlan.config %}
+ switchport trunk allowed vlan {{  vlan.config['trunk-vlans']|join(',') }}
+{% endif %}
+{% endif %}{# end: interface.ethernet.switched-vlan #}
+!
+{% endfor %}{# end: config.interfaces.interface #}

@@ -1,0 +1,80 @@
+system {
+  host-name {{ system.hostname }};
+  domain-name {{ dns['domain-name'] }};
+  time-zone Europe/Ljubljana;
+  authentication-order [ radius password ];
+  root-authentication {
+    encrypted-password "{{ aaa.users.user.admin['encrypted-password'] }}";
+  }  
+  name-server {
+{% for name_server in dns['name-servers']['name-server'] %}
+    {{ name_server }};
+{% endfor %}
+  }  
+  radius-server {
+   {{ aaa.radius.servers.server.name }} {
+    port 1812;
+    secret {{ aaa.radius.servers.server.secret }};
+    timeout 2;
+    retry 2;
+    source-address 178.172.79.204;
+   }
+  }
+  login {
+   user radius-admin {
+    uid 2000;
+    class super-user;
+   }
+   user admin {
+    uid 2001;
+    class super-user;
+    authentication {
+     encrypted-password "{{ aaa.users.user.admin['encrypted-password'] }}";
+    }
+   }
+ }
+ services {
+  ftp;
+  ssh;
+  telnet;
+  netconf {
+   ssh;
+  }
+ } 
+ ntp {
+   {% for server in ntp.servers.server %}
+   server {{ server }};
+   {% endfor %}    
+  }
+}   
+{% for community in snmp.communities.community.values() %}
+snmp {
+    community {{ community.community }} {
+        authorization read-only;
+    }
+}
+{% endfor %}
+routing-options {
+  static {
+{%- for route in local_routing['static-routes'].values() %}  
+   route {{route.route}} next-hop {{route['next-hop']}};
+{% endfor %}
+  }
+}
+protocols {
+    igmp-snooping {
+        vlan all;
+    }
+    rstp;
+    lldp {
+        interface all;
+    }
+    lldp-med {
+        interface all;
+    }
+}
+ethernet-switching-options {
+    storm-control {
+        interface all;
+    }
+}
