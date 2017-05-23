@@ -22,29 +22,15 @@
 
 import os
 import unittest
-
+from django.core.mail import outbox
 from notifications import send_error_message
 from notifications import send_notification_message
 from utils import read
 from utils import write
 import test_settings
 
-
 class TestToolsonMethods(unittest.TestCase):
 
-    def test_write(self):
-
-        self.assertIsNone(write(config="test",
-                                path="/tmp/",
-                                output_filename="toolson_test.txt"))
-
-    def test_read(self):
-
-        write(config="test",
-              path="/tmp/",
-              output_filename="toolson_test.txt")
-        text = read("/tmp/toolson_test.txt")
-        self.assertEqual(text, "test")
 
     def test_send_error_message(self):
 
@@ -58,16 +44,13 @@ class TestToolsonMethods(unittest.TestCase):
                                              mail_from='noreply@arnes.si',
                                              mail_to=["test@arnes.si"]))
 
-        mail_folder = "/tmp/app-messages/"
-        files = sorted(os.listdir(mail_folder), key=lambda f: os.path.getctime("{}/{}".format(mail_folder, f)))
-        text = read("%s%s" % (mail_folder, files[-1]))
-        self.assertIn("Subject: [BACKEND-TEST] TEST > Test action > Exception occurred building Test", text)
-        self.assertIn("From: noreply@arnes.si", text)
-        self.assertIn("To: test@arnes.s", text)
-        self.assertIn("[BACKEND-TEST] TEST > Test action",text)
-        self.assertIn("Action: Test action", text)
-        self.assertIn("""Message:
-Test error""", text)
+        self.assertIn("[BACKEND-TEST] TEST > Test action > Exception occurred building Test", outbox[-1].subject)
+        self.assertIn("noreply@arnes.si", outbox[-1].from_email)
+        self.assertEqual(["test@arnes.si"], outbox[-1].to)
+        self.assertIn("[BACKEND-TEST] TEST > Test action", outbox[-1].subject)
+        self.assertIn("Action: Test action", outbox[-1].body)
+        self.assertIn("Message:\nTest error", outbox[-1].body)
+
 
     def test_send_notification_message(self):
 
@@ -82,19 +65,15 @@ Test error""", text)
                                                     mail_from='noreply@arnes.si',
                                                     mail_to=["test@arnes.si"]))
 
-        mail_folder = "/tmp/app-messages/"
-        files = sorted(os.listdir(mail_folder), key=lambda f: os.path.getctime("{}/{}".format(mail_folder, f)))
-        text = read("%s%s" % (mail_folder, files[-1]))
-        self.assertIn("""Subject: [BACKEND-TEST] TEST > Entity added > Federation: ArnesAAI EntityID:
- https://idp.aai.arnes.si/idp/test/""", text)
-        self.assertIn("From: noreply@arnes.si", text)
-        self.assertIn("To: test@arnes.s", text)
-        self.assertIn("[BACKEND-TEST] TEST > Entity added",text)
-        self.assertIn("Organization: Akademska in raziskovalna mreža Slovenije",text)
-        self.assertIn("Action: Entity added", text)
-        self.assertIn("""Message:
-Federation: ArnesAAI EntityID: https://idp.aai.arnes.si/idp/test/""", text)
-        self.assertIn("User: blaz", text)
+        self.assertIn("[BACKEND-TEST] TEST > Entity added > Federation: ArnesAAI EntityID: https://idp.aai.arnes.si/idp/test/", outbox[-1].subject)
+        self.assertIn("noreply@arnes.si", outbox[-1].from_email)
+        self.assertEqual(["test@arnes.si"], outbox[-1].to)
+        self.assertIn("[BACKEND-TEST] TEST > Entity added", outbox[-1].subject)
+        self.assertIn("Organization: Akademska in raziskovalna mreža Slovenije", outbox[-1].body)
+        self.assertIn("Action: Entity added", outbox[-1].body)
+        self.assertIn("Message:\nFederation: ArnesAAI EntityID: https://idp.aai.arnes.si/idp/test/", outbox[-1].body)
+        self.assertIn("User: blaz", outbox[-1].body)
+
 
 if __name__ == '__main__':
     unittest.main()

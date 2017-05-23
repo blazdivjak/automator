@@ -119,7 +119,7 @@ USE_L10N = True
 
 USE_TZ = True
 
-STATIC_ROOT = '/opt/django/static/inventory/'
+STATIC_ROOT = 'staticfiles/'
 STATIC_URL = '/static/'
 STATICFILES_DIRS = (
     'static/',
@@ -149,12 +149,12 @@ ANSIBLE = {
     'HOST_VARS': 'host_vars/',
     'FACTS_PATH': 'gathered_facts/',
     'INTERFACE_MAP': {
-                      'ethernetCsmacd': ['ethernet', 'eth', 'ge', 'gi'],
-                      'propVirtual': ['vlan'],
-                      'softwareLoopback': ['lo', 'Loopback', 'loopback'],
-                      'l2vlan' : ['GigabitEthernet0/1.501'], #todo write regex or smtin :D
-                      'tunnel': ['gre']
-                      }
+        'ethernetCsmacd': ['ethernet', 'eth', 'ge', 'gi'],
+        'propVirtual': ['vlan'],
+        'softwareLoopback': ['lo', 'Loopback', 'loopback'],
+        'l2vlan' : ['GigabitEthernet0/1.501'], #todo write regex or smtin :D
+        'tunnel': ['gre']
+    }
 }
 
 #-----------------------------------------------
@@ -167,8 +167,8 @@ DHCP_SERVICE = {
 #-----------------------------------------------
 #AMQP
 #-----------------------------------------------
-BROKER_URL = 'amqp://guest@c7//'
-BACKEND_URL = 'amqp://guest@c7//'
+BROKER_URL = 'amqp://guest@localhost//'
+BACKEND_URL = 'amqp://guest@localhost//'
 #: Only add pickle to this list if your broker is secured
 #: from unwanted access (see userguide/security.html)
 CELERY_ACCEPT_CONTENT = ['json']

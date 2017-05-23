@@ -30,6 +30,9 @@ if [ "$#" -ne 1 ];
 fi
 if [ "$1" == "team-member" ]; then
         SETTINGS="automator.settings"
+
+        echo "Start AMPQ service! For quick startup we recommend using docker:"
+        echo "\$ docker run -d -p 5672:5672 --name rabbitmq rabbitmq"
 elif [ "$1" == "devel" ]; then
         SETTINGS="automator.settings_devel"
 else
@@ -38,8 +41,7 @@ else
         echo ""
         exit 2
 fi
-#echo "Creating directories"
-#mkdir -p /opt/django/static/
+
 echo "VIRTUAL ENVIRONMENT: Checking if virtual environment exists"
 if [ ! -f ./.venv/bin/activate ]; then
     echo "VIRTUAL ENVIRONMENT: Does not exist."
@@ -51,8 +53,8 @@ fi
 echo "VIRTUAL ENVIRONMENT: Activating"
 source ./.venv/bin/activate
 cd $path
-echo "GIT: Pulling latest version from github"
-git pull
+# echo "GIT: Pulling latest version from github"
+# git pull
 echo "DEPENDENCIES: Installing Python dependencies"
 pip install -r requirements.txt
 echo "OpenConfig Models: Initialize"
@@ -72,5 +74,7 @@ python manage.py migrate --settings $SETTINGS
 #python manage.py collectstatic --noinput --settings $SETTINGS
 echo "DATABASE: Creating cache table"
 python manage.py createcachetable --settings $SETTINGS
-echo "DATABASE: Loading Initial data"
-echo "SET SAIL FOR ADVENTURE: Use username: admin, password: tMRAGkMDfMk3UJ2zJKgb to login in http://0.0.0.0:8000"
+# echo "DATABASE: Loading Initial data"
+# echo "SET SAIL FOR ADVENTURE: Use username: admin, password: tMRAGkMDfMk3UJ2zJKgb to login in http://0.0.0.0:8000"
+echo "Now create superuser: \"python manage.py createsuperuser --settings $SETTINGS\""
+echo "Then start the server: \"python manage.py runserver 0.0.0.0:8000 --settings $SETTINGS\""
