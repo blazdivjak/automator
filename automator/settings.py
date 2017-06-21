@@ -167,8 +167,8 @@ DHCP_SERVICE = {
 #-----------------------------------------------
 #AMQP
 #-----------------------------------------------
-BROKER_URL = 'amqp://guest@localhost//'
-BACKEND_URL = 'amqp://guest@localhost//'
+BROKER_URL = 'amqp://guest@gateway//'
+BACKEND_URL = 'amqp://guest@gateway//'
 #: Only add pickle to this list if your broker is secured
 #: from unwanted access (see userguide/security.html)
 CELERY_ACCEPT_CONTENT = ['json']

@@ -140,6 +140,24 @@ _Additionaly based on serializer class defined for a specific view, different at
 
 ## Installation and configuration
  
+### Easy and fast
+For fast and easy startup use docker:
+```
+docker run -d -p 5672:5672 --name rabbitmq rabbitmq
+docker build . -t automator
+docker run -itd -p 8000:8000 -v $(pwd):/opt/automator --name automator automator
+docker run -itd -v $(pwd):/opt/automator --name celery automator celery -A automator worker -l info
+docker run -itd -p 5555:5555 -v $(pwd):/opt/automator --name flower automator celery -A automator flower --port=5555
+```
+ 
+SQLite is used for database by default and it is mounted to development directory.
+
+Create superuser
+```
+docker exec -it automator python manage.py createsuperuser
+```
+Access the development environment: http://localhost:8000
+
 ### Dependencies
 
 * mysql
