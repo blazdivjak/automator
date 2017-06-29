@@ -20,6 +20,8 @@
 #
 ########################################################################
 path=$(pwd) #Default path for developers and production
+echo "WARNING: This script is deprecated in favor of docker containers. It may 
+be removed in future releases. Please consult README for more information."
 USAGE="usage: $1 [team-member | devel ]" #Usage parameters
 set -e
 if [ "$#" -ne 1 ];
