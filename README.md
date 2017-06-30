@@ -140,15 +140,48 @@ _Additionaly based on serializer class defined for a specific view, different at
 
 ## Installation and configuration
  
-### Dependencies
+### Easy and fast
+For fast and easy startup use docker:
+```
+docker run -d -p 5672:5672 --name rabbitmq rabbitmq
+docker build . -t automator
+# build openconfig modules
+docker run -d -p 8000:8000 -v $(pwd):/opt/automator --name automator automator
+docker exec -it automator bash -c "cd lib/openconfig && ./openconfig.sh"
+docker run -d -v $(pwd):/opt/automator --name celery automator celery -A automator worker -l info
+docker run -d -p 5555:5555 -v $(pwd):/opt/automator --name flower automator celery -A automator flower --port=5555
+```
+ 
+SQLite is used for database by default and it is mounted to development directory.
 
+Migrate database:
+```
+docker exec automator python manage.py migrate
+```
+Create superuser
+```
+docker exec -it automator python manage.py createsuperuser
+```
+Access the development environment: http://localhost:8000
+
+Most common development copy-paste commands:
+```
+docker exec automator python manage.py reset_db --noinput
+docker exec automator python manage.py test --noinput
+docker exec automator python manage.py createcachetable
+docker exec automator python manage.py collectstatic --noinput
+```
+
+### Dependencies for running native
+
+Running service loccaly you will need:
 * mysql
 
 Hint: on macOS use `#brew install mysql`
 
-**Install and start RabbitMQ server**
+**RabbitMQ server**
 
-Install it on your box or some server and configure it in settings.py.
+We recommend using official RabbitMQ container. Configure endpoint in settings.py.
 
 ```
 #-----------------------------------------------
@@ -165,6 +198,8 @@ cd <automator_project_path>
 ./scripts/bootstrap_project.sh team-member
 ```
 
+NOTE: We recommend using docker
+
 **Configure Ansible environment**
 Export Ansible configuration environment variable in Django project and Celery Daemon. Celery daemon should already be configured in automator/celery.py file. 
 ```
@@ -176,36 +211,6 @@ Change configuration in settings.py.
 ```
 AUTOMATOR_ENABLE = True
 ```
-
-## Run
-
-**Run Celery daemon for processing AMQP messages**
-
-Add alias to your .bash_rc to simplfy running Celery daemon.
-```
-alias activate-virtualenv-automator="source /opt/virtual_environments/automator/bin/activate"
-alias activate-automator-celery="cd <path_to_automator>/automator/ && activate-virtualenv-automator && celery -A automator worker -l info"
-alias activate-automator-flower="cd <path_to_automator>/automator/ && activate-virtualenv-automator && celery -A automator flower --port=5555"
-```
-
-**Run Celery daemon.**
-
-```
-activate-automator-celery
-```
-
-**Run Flower webgui for AMQP message watch.**
-```
-activate-automator-flower
-```
-
-**Run Django project**
-```
-cd <path_to_automator>
-python manage.py runserver 0.0.0.0:1337
-```
-
-Browse to http://0.0.0.0:1337/admin/.
 
 ## Develop
 

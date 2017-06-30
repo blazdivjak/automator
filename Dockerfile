@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ########################################################################
 #
 # (C) 2016, Blaz Divjak, ARNES <blaz@arnes.si> <blaz@divjak.si>
@@ -20,8 +19,33 @@
 #
 ########################################################################
 
-#Test for settings
+# Automator container image
 
-SECRET_KEY="xxx"
+FROM centos:7
+LABEL version="0.1"
 
-EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend'
+# variables
+ENV automator_dir /opt/automator
+ENV settings automator.settings
+
+# install dependencies
+RUN yum install -y \
+	python-setuptools \
+	gcc \
+	python-devel \
+	mysql-devel \
+	git 
+# Ansible on CentOS 7:
+# yum install -y openssl-devel
+
+# mount project
+VOLUME [$automator_dir]
+ADD . $automator_dir
+
+# set workdir
+WORKDIR $automator_dir
+
+RUN easy_install pip
+RUN pip install -r requirements.txt
+
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
