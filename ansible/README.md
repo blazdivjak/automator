@@ -1,33 +1,32 @@
 # AUTOMATOR 
 
+## Author: Blaž Divjak <blaz@divjak.si>
+## Date: 1.11.2016
+## Version: v0.1
 
-**Author: Blaž Divjak, ARNES <blaz@arnes.si> <blaz@divjak.si>**
-**Date: 1.11.2016**
-**Version: v0.1**
+## Network device and service automation layer for network and service orchestration
 
-**Network device and service automation layer for network and service orchestration**
-
-## Roles
+### Roles
 
 Includes Ansible roles for network devices and services.
 
-## Services
+### Services
 
 * dhcp (isc dhcpd service)
 * elk (automatic remediation service)
 
-## Network device modules
+### Network device modules
 
 * interfaces
 * relay-agent
 * system
 * vlans
 
-## Variables
+### Variables
 
 Several variables could be defined, `group_vars` could be used for all hosts, `host_vars` are generated dynamically by the system and `host_vars_static` could be edited manually and override both of the previous. See example YAML structures below.
 
-### Network devices
+#### Network devices
 
 Static YAML structure that can be placed inside `host_vars_static`.
 ```yaml
@@ -323,7 +322,7 @@ vlans:
 
 ```
 
-### DHCP service and ELK service
+#### DHCP service and ELK service
 Static YAML structure that can be placed inside `host_vars_static`.
 ```yaml
 ansible_connection: ssh
